@@ -1,0 +1,256 @@
+```{r}
+# Creating a new data frame hmo using the read_csv function for the Health Management Organization.
+library(tidyverse)
+hmo <- read_csv("https://intro-datascience.s3.us-east-2.amazonaws.com/HMO_data.csv")
+head(hmo) # top 6 rows of the data set
+#View(hmo)
+```
+
+```{r}
+#install.packages("imputeTS")
+library(imputeTS) # package imputeTS to apply for interpolation
+# na_interpolation is used to replace missing values.
+hmo$age <- na_interpolation(hmo$age)
+hmo$bmi <- na_interpolation(hmo$bmi)
+```
+
+EXPLORING DATASET
+
+```{r}
+dim(hmo) # shows the dimension that is number of rows and columns in the dataset.
+# View(hmo)
+```
+
+```{r}
+# The structure of the dataset tells us the data type of each variable and the number of rows in each columns.
+str(hmo)
+```
+
+```{r}
+# According to the summary for cost it will show us the min and max values and the median and mean for that particular column.
+summary(hmo$cost)
+```
+```{r}
+# table function for the location_type will tell us the count for both the Urban and Country in the data set.
+table(hmo$location_type)
+```
+
+```{r}
+# table function for the location will tell us the count for all the 7 states (CONNECTICUT,MARYLAND,MASSACHUSETTS,NEW JERSEY,NEW YORK, PENNSYLVANIA, RHODE ISLAND)in the data set.
+table(hmo$location)
+```
+
+```{r}
+# We performed a correlation to check between age, bmi and cost columns for hmo dataset.
+cor(hmo[c("age", "bmi", "cost")])
+```
+
+DECIDING THE THRESHOLD
+
+```{r}
+# We have used tidyverse and dplyr libraries to merge the two datasets.
+# The first data set is the hmo and the second data set is a derived dataset from hmo.
+# In the derived data set i.e avg_cost, we have used pipeline to groupby the hmo using location and location_type columns and also summarising using the mean for the cost column as per the unique location and location_type.
+# After that we merge hmo and avg_cost dataset in new dataset merge_df using merge function.
+
+library(tidyverse)
+library(dplyr)
+avg_cost <- hmo %>% group_by(location,location_type) %>% summarise_at(vars("cost"),mean)
+merge_df <- merge(hmo, avg_cost, by=c("location", "location_type"))
+#View(merge_df)
+
+merge_df$cost <- merge_df$cost.x
+merge_df$avgcost <- merge_df$cost.y
+#View(merge_df)
+
+merge_df <- subset(merge_df, select = -c(cost.x, cost.y))
+#View(merge_df)
+```
+
+```{r}
+# We have created a new variable in the merge_df data set using the for and if else loop, while comparing the original cost with average cost for the location and location_type.
+expensive <- c() 
+for(i in 1:length(merge_df$X)){
+  if (merge_df$cost[i] > merge_df$avgcost[i]){
+    expensive <- append(expensive, "expensive")
+  }
+  else{
+    expensive <- append(expensive, "not expensive")
+  }
+}
+
+merge_df$exp <- expensive
+
+View(merge_df)
+```
+
+PLOTTING
+
+```{r}
+# Ploting histogram for bmi
+hist(merge_df$bmi)
+# Ploting boxplot for bmi
+boxplot(merge_df$bmi)
+```
+
+```{r}
+# Ploting histogram for age
+hist(merge_df$age)
+# Ploting boxplot for age
+boxplot(merge_df$age)
+```
+
+```{r}
+# Ploting histogram for children
+hist(merge_df$children)
+# Ploting boxplot for children
+boxplot(merge_df$children)
+```
+```{r}
+# table function for the count of expensive and not expensive rows in the exp column.
+table(merge_df$exp)
+```
+```{r}
+# We have replaced the categorical values to 1 and 0 for the below columns.
+
+merge_df$smoker[merge_df$smoker=="no"]<-0
+merge_df$smoker[merge_df$smoker=="yes"]<-1
+
+
+merge_df$exercise[merge_df$exercise=="Not-Active"]<-0
+merge_df$exercise[merge_df$exercise=="Active"]<-1
+
+merge_df$yearly_physical[merge_df$yearly_physical=="No"]<-0
+merge_df$yearly_physical[merge_df$yearly_physical=="Yes"]<-1
+
+merge_df$married[merge_df$married=="Not_Married"]<-0
+merge_df$married[merge_df$married=="Married"]<-1
+
+summary(merge_df)
+View(merge_df)
+```
+```{r}
+# We have done splitting of merge_df data set into a separate expensive dataset and a not expensive dataset individually.
+df1 <- data.frame(merge_df[merge_df$exp == 'expensive',])
+df2 <- data.frame(merge_df[merge_df$exp != 'expensive',])
+
+View(df1)
+View(df2)
+nrow(df1)
+nrow(df2)
+```
+
+```{r}
+# For Expensive
+# Bar plot performed using ggplot2 library and ggplot, geom_bar function for (age vs cost vs smoker)
+library(ggplot2)
+ggplot(df1, aes(x = factor(age), y = cost,fill = smoker, colour = smoker)) +geom_bar(stat = "identity", position = "dodge")+theme(axis.text.x=element_text(angle=90,hjust=1))
+```
+
+```{r}
+# For Expensive
+# Bar plot performed using ggplot2 library and ggplot, geom_bar function for (age vs cost vs exercise)
+library(ggplot2)
+ggplot(df1, aes( x = factor(age), y = cost,fill =exercise , colour = exercise)) +geom_bar(stat = "identity", position = "dodge")+theme(axis.text.x=element_text(angle=90,hjust=1))
+```
+
+```{r}
+# For not expensive
+# Bar plot performed using ggplot2 library and ggplot, geom_bar function for (age vs cost vs smoker)
+library(ggplot2)
+ggplot(df2, aes(x = factor(age), y = cost,fill = smoker, colour = smoker)) +geom_bar(stat = "identity", position = "dodge")+theme(axis.text.x=element_text(angle=90,hjust=1))
+```
+
+```{r}
+# For not expensive
+# Bar plot performed using ggplot2 library and ggplot, geom_bar function for (age vs cost vs exercise)
+library(ggplot2)
+ggplot(df2, aes( x = factor(age), y = cost,fill =exercise , colour = exercise)) +geom_bar(stat = "identity", position = "dodge")+theme(axis.text.x=element_text(angle=90,hjust=1))
+```
+
+DRAWING MAP
+
+```{r}
+# US map for the 7 states with the highest cost of Health Maintenance Organization.
+
+library(tidyverse)
+summarised_data <- hmo %>% group_by(location) %>% summarise(state_cost = mean(cost))
+summarised_data$location <- tolower(summarised_data$location)
+
+library(ggplot2); library(maps); library(ggmap); library(mapproj) # calling the packages
+us <- map_data("state") # assigning the data
+us$state_name <- tolower(us$region)
+
+merged_data <- merge(us, summarised_data, all.x=TRUE,by.x="state_name",by.y="location") %>% arrange(order)
+map <- ggplot(merged_data, aes(map_id= state_name)) # plotting the data
+map <- map + aes(x=long, y=lat, group=group) + 
+geom_polygon(aes(fill = state_cost), color = "white") # adding polygons to the map
+map <- map + expand_limits(x=us$long, y=us$lat) 
+map <- map + coord_map() + ggtitle("USA Map") # adding actual map underneath
+map
+```
+
+MODELLING PART
+
+```{r}
+# We have used fastDummies library  for - Fast Creation of Dummy (Binary) Columns and Rows from Categorical Variables. 
+library(fastDummies)
+datafile <- merge_df
+dummy_data <- datafile[, -match(c('cost', 'avgcost'), names(datafile))] %>% dummy_cols(remove_first_dummy = TRUE)
+columns <- c('age', 'bmi', 'children', "location_MASSACHUSETTS","location_NEW JERSEY","location_NEW YORK",
+             "location_PENNSYLVANIA", "location_RHODE ISLAND", "location_type_Urban",
+             "smoker_1", "education_level_Master", "education_level_No College Degree",
+             "education_level_PhD", "yearly_physical_1", "exercise_1",
+             "married_1", "gender_male", "exp_not expensive")
+#columns1 <- c('age', 'bmi', 'smoker_yes', 'exercise_Not-Active', 'expensive_status_YES')
+
+# We have created the train and test dataset.
+train_data <- dummy_data[,columns]
+index <- createDataPartition(train_data$`exp_not expensive`, p=0.7, list=FALSE)
+X_train <- train_data[index, 1:17]
+y_train <-  as.factor(train_data[index, 18])
+
+X_test <- train_data[-index, 1:17]
+y_test <- as.factor(train_data[-index, 18])
+```
+
+```{r}
+# Performed KNN Model (K- Nearest Neighbor)
+model_knn <- train(X_train, y_train, method='knn', tuneLength = 10,
+                   trControl = trainControl(method = "cv"))
+saveRDS(model_knn, "model_knn.rds")
+```
+
+```{r}
+# Performed LogitBoost Classification Algorithm
+model_lb <- train(X_train, y_train, method='LogitBoost',preProcess=c("center", "scale"))
+saveRDS(model_lb, "model_lb.rds")
+```
+
+```{r}
+# Performed SVM (Support Vector Machine)
+model_svm <- train(X_train, y_train, method='svmLinear',preProcess=c("center", "scale"))
+saveRDS(model_svm, "model_svm.rds")
+```
+
+```{r}
+# Performed NNET (Neural Networks)
+model_nnet <- train(X_train, y_train, method='nnet',tuneLength = 2,
+                    trace = FALSE,
+                    maxit = 100)
+saveRDS(model_nnet, "model_nnet.rds")
+```
+
+```{r}
+# Run a test sample here for every model. 
+
+model = model_knn # (we can change the name of model we want to run)
+feature_importance <- varImp(model, scale=FALSE)
+plot(feature_importance)
+
+predictions<-predict(object=model,X_test)
+table(predictions)
+confusionMatrix(predictions,y_test)
+summary(model)
+```
+
