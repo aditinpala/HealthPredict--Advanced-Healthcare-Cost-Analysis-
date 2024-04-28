@@ -1,4 +1,4 @@
-# HealthPredict--Advanced-Healthcare-Cost-Analysis-
+# HealthPredict Advanced Healthcare Cost Analysis 
 
 
 The project titled "Analysis and Prediction of Health Care Costly Customers" conducted by (Aditi Pala, Indra Ariunbold, Rujuta Mirajkar, Jaineel Parmar, Rithvik Segu) for IST 687 – Introduction to Data Science can be summarized as follows:
