@@ -5,7 +5,7 @@ The project titled "Analysis and Prediction of Health Care Costly Customers" con
 
 The main objective of the project was to offer actionable insights and estimate individuals (clients) who would incur expensive healthcare costs. The dataset used contained healthcare expenses from an HMO (Health Management Organization).
 
-# Introduction: 
+# About the Project: 
 The project utilized R packages such as tidyverse, caret, ggplot2, fastDummies, ggmap, and shiny. Data importation involved reading a CSV file via URL to access structured data.
 
 Determining Threshold for Expensive Variable: A criterion based on location and location type was established to segregate expensive healthcare costs. The average cost per person based on location was used as the threshold.
